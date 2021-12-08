@@ -486,13 +486,22 @@ public function getMaree() {
     return;
   }
   $url = 'http://horloge.maree.frbateaux.net/ws' . $port . '.js?col=1&c=0';
-  $result = file($url);
+// Correction jyq44->
+//$result = file($url);
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+curl_setopt($ch, CURLOPT_USERAGENT, ‹ Jeedom ›);
+$result = curl_exec ($ch);
+curl_close($ch);
+// <-Correction jyq44
+	
   if ($result === false) {
     return;
   }
 
   //log::add(__CLASS__, 'debug', 'Log ' . print_r($result, true));
-
+/*
   $maree = explode('<br>', $result[15]);
   $maree = explode('"', $maree[1]);
   $maree = $maree[0];
@@ -502,6 +511,15 @@ public function getMaree() {
   $basse = explode('BM ', $result[17]);
   $basse = substr($basse[1], 0, 5);
   $basse = str_replace('h', '', $basse);
+*/
+preg_match(’((Coef.
+)([0-9]{2,3}))’, $result, $data);
+$maree = $data[2];
+preg_match(’((innerHTML="PM )([0-9]{2}h[0-9]{2}))’, $result, $data);
+$basse = str_replace(‹ h ›,’’,$data[2]);
+preg_match(’((
+BM )([0-9]{2}h[0-9]{2}))’, $result, $data);
+$pleine= str_replace(‹ h ›,’’,$data[2]);
 
   log::add(__CLASS__, 'debug', 'Marée ' . $maree . ', Pleine ' . $pleine . ', Basse ' . $basse);
   $this->checkAndUpdateCmd('maree', $maree);
